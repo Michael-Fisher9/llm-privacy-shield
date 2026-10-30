@@ -1,0 +1,17 @@
+[project]
+name = "llm-privacy-shield"
+version = "0.1.0"
+description = "Swap names, contact details and sensitive businesses for stand-ins before text goes to a hosted LLM, and swap them back after."
+requires-python = ">=3.9"
+dependencies = []
+license = {text = "MIT"}
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["shield"]

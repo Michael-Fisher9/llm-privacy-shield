@@ -1,0 +1,7 @@
+category,label,hide
+medical,Clinic,yes
+financial,Financial company,yes
+legal,Law office,yes
+travel,Travel company,no
+food,Restaurant,no
+retail,Store,no
