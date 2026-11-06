@@ -4,7 +4,8 @@ import re
 URL = re.compile(r"https?://[^\s<>\"')\]]*[^\s<>\"')\].,;:!?]")
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 # (?<![\w\[]) so a stand-in like [Phone 2] is never read as a phone number again
-PHONE = re.compile(r"(?<![\w\[])(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}(?!\d)")
+# Ten digits with no separators count too ("5125550199"); card and account numbers are removed before this runs.
+PHONE = re.compile(r"(?<![\w\[])(?:(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}|\d{10})(?![\d\]])")
 
 REMOVED = "[removed]"
 

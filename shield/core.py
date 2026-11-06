@@ -82,7 +82,10 @@ class Shield:
         if known:
             return known
         token = self.store.get_or_add(real, kind, self._label(kind, category))
-        self._add(real, token, ignore_case=kind in ("email", "link"))
+        # A full name typed in lowercase is still that person; a lone first name isn't safe to
+        # match that way ("will", "mark"), so only names of two or more words ignore case.
+        whole_name = kind in ("person", "org") and len(real.split()) > 1
+        self._add(real, token, ignore_case=kind in ("email", "link") or whole_name)
         self._short_form(real, token, kind)
         return token
 

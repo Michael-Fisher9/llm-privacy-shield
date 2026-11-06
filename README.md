@@ -1,6 +1,6 @@
 # llm-privacy-shield
 
-Swaps names, contact details and sensitive businesses for stand-ins before text goes to a hosted LLM, and swaps them back when the answer comes home.
+Hides names and personal details from a hosted LLM, then puts them back in the answer.
 
 ```
 you write:        Dana Whitfield can't do Thursday. Move my cleaning at Bayside Family Dental to Friday
@@ -11,7 +11,26 @@ the model says:   reschedule(place="[Clinic 1]", then="text [Person 1] at [Phone
 your code gets:   reschedule(place="Bayside Family Dental", then="text Dana Whitfield at 512-555-0199")
 ```
 
-I built the first version of this for a personal data hub that sends my notes and emails to a model to get them filed. This is that piece pulled out on its own, with no database server and no dependencies.
+I built this for a personal data hub that sends my notes and emails to a model for filing. This is that piece on its own: no server, no dependencies.
+
+## How well it works
+
+500 made-up messages with 3,898 planted details, so every miss can be counted (`python evals/run_eval.py`):
+
+| Planted detail | Caught | Rate |
+|---|---:|---:|
+| Listed person: full name, first name or nickname | 658 of 658 | 100% |
+| Listed person, full name typed in lowercase | 223 of 223 | 100% |
+| Sensitive business (clinic, bank, law office) | 227 of 227 | 100% |
+| Phone, email or link, listed or not | 907 of 907 | 100% |
+| SSN, card number or one of your own numbers | 637 of 637 | 100% |
+| Model answer with brackets dropped or case changed, restored | 500 of 500 | 100% |
+| Everyday business and ordinary words left alone (on purpose) | 599 of 599 | 100% |
+| Listed person, first name typed in lowercase | 0 of 207 | 0% |
+| Business called by a short name with no alias ("the Northgate office") | 0 of 218 | 0% |
+| A name it was never told about | 0 of 222 | 0% |
+
+The three misses are deliberate trade-offs, covered under Limits.
 
 ## Use
 
@@ -25,36 +44,25 @@ ask = shield.wrap(my_model_call)    # any function that takes a prompt and retur
 answer = ask("Can Dana make it Friday?")
 ```
 
-Or call `shield.out(text)` before sending and `shield.back(reply)` after. `back` works on strings, lists and dicts, so tool-call arguments come back with the real values in them.
+Or call `shield.out(text)` before sending and `shield.back(reply)` after. `back` handles strings, lists and dicts, so tool-call arguments come back with the real values. `python examples/demo.py` runs the example above with a fake model.
 
-`python examples/demo.py` runs the example above with a fake model.
-
-## Settings
-
-- `config/names.csv`: people and businesses to look for, with aliases (`Dee` for Dana).
-- `config/categories.csv`: which kinds of business are hidden. A dentist or a credit union says something about you; a coffee shop usually doesn't, and the model is more useful if it can see it. Each kind has a label, so a hidden dentist becomes `[Clinic 1]`, not `[Company 1]`.
-- `my_numbers.txt`: your own numbers (licence, member IDs), one per line. It's in `.gitignore`. They're found however they're punctuated and removed outright.
-
-Emails, phone numbers and links nobody listed are learned the first time they show up.
+Three small files set it up: `names.csv` (people and businesses, with aliases), `categories.csv` (which kinds of business to hide) and `my_numbers.txt` (your own ID numbers, git-ignored).
 
 ## Why it's built this way
 
-- **Stand-ins keep the kind of thing.** `[Clinic 1]` instead of `XXXX` means the model can still reason ("book a follow-up at the clinic") and its answers still make sense.
-- **Numbered and stable.** The same person is `[Person 1]` today and next week, so a conversation that spans several calls stays consistent. That's why the table lives in SQLite and not in memory.
-- **ID numbers are removed, not swapped.** A model never needs to tell two SSNs apart, and a stand-in would mean storing the real number in the lookup table.
-- **Matching back is forgiving.** Models drop the brackets or change case ("person 1", `[PERSON 1]`), so numbered stand-ins match either way. `[Me]` has no number and must keep its brackets, or every "me" in an answer would turn into your name.
-- **First names count.** "Dana" and "Dana Whitfield" map to the same stand-in, longest match first, or the model would see two people.
+- **Stand-ins keep the kind of thing.** `[Clinic 1]` instead of `XXXX`, so the model can still reason about it.
+- **The same person keeps the same stand-in** across calls and days. That's why the lookup table lives in SQLite.
+- **ID numbers are removed, not swapped.** A model never needs to tell two SSNs apart, and swapping would mean storing the real number.
+- **A dentist is hidden, a coffee shop isn't.** Some businesses say something about you; most don't, and the model is more useful when it can see them.
+- **Lowercase only counts for full names.** Matching "dana" would also mean matching "will" and "mark" for people named Will and Mark.
 
 ## Limits
 
-- A name it has never seen goes through the first time. Add people to `names.csv`, or call `shield.learn(name, "person")` when your own code finds one.
-- Context can still give things away ("my physical therapy follow-up on Tuesday"). This hides identifiers, not topics.
-- Images and PDFs can't be filtered. Don't send them through this.
-- The lookup table is the key to everything. Keep `shield.db` on your machine.
+- It only knows names you've listed. Add them to `names.csv`, or call `shield.learn(name, "person")` when your code finds one.
+- Short business names need an alias ("Northgate" for Northgate Credit Union).
+- It hides identifiers, not topics: "my physical therapy follow-up" still says something.
+- `shield.db` is the key to everything. Keep it on your machine.
 
 ## Tests
 
-```
-pip install -e ".[test]"
-pytest
-```
+`pip install -e ".[test]"`, then `pytest`. MIT license.

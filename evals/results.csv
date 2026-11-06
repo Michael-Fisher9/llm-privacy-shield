@@ -1,0 +1,18 @@
+detail,handled,total,rate
+"listed person, full name",227,227,1.000
+"listed person, first name",343,343,1.000
+"listed person, nickname",88,88,1.000
+"listed person, full name in lowercase",223,223,1.000
+"listed person, first name in lowercase",0,207,0.000
+sensitive business,227,227,1.000
+"sensitive business, short name with no alias",0,218,0.000
+phone number,240,240,1.000
+"phone number, other formats",220,220,1.000
+email address,240,240,1.000
+link,207,207,1.000
+ID or card number,424,424,1.000
+"my own number, any punctuation",213,213,1.000
+everyday business (kept on purpose),211,211,1.000
+ordinary words left alone,388,388,1.000
+name never listed,0,222,0.000
+round trip (model drops brackets or changes case),500,500,1.000

@@ -71,3 +71,9 @@ def test_wrap_shields_any_model_call(shield):
     ask = shield.wrap(fake_model)
     assert ask("Can Dana Whitfield make it?") == "Sure, I'll ask Dana Whitfield."
     assert seen == ["Can [Person 1] make it?"]
+
+
+def test_phones_without_separators_and_lowercase_full_names(shield):
+    out = shield.out("ask dana whitfield to call 5125550199")
+    assert out == "ask [Person 1] to call [Phone 1]"
+    assert shield.out("will you text dana?") == "will you text dana?"  # a lone lowercase first name is left alone
